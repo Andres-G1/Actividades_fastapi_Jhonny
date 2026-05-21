@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from modelos.cliente import Client, Clientcreate, Clientt
-from modelos.facture import Facture
-from modelos.transaction import Transaction
+from models.cliente import Client, Clientcreate, Clientt
+from models.facture import Facture
+from models.transaction import Transaction
 
 app = FastAPI()
 
