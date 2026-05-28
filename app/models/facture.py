@@ -1,9 +1,24 @@
 from pydantic import BaseModel
-from .cliente import Client
 import datetime
 
 class Facture(BaseModel):
-    id: int | None = None
     date: datetime.date = datetime.date.today()
-    client: Client
+    id_client: int
     totalvalue: float
+
+class createfacture(Facture):
+    pass
+
+class updatefacture(Facture):
+    id: int | None = None
+
+class transactions(BaseModel):
+    unitari_value: float
+    cantidad: int
+    facture_id: int
+
+class transactioncreate(transactions):
+    pass
+
+class transactiont(transactions):
+    id: int | None = None

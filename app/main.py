@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from models.cliente import Client, Clientcreate, Clientt
-from models.facture import Facture
-from models.transaction import Transaction
+from models.facture import Facture, createfacture, updatefacture, transactions, transactioncreate, transactiont
 
 app = FastAPI()
 
@@ -62,49 +61,84 @@ transaction(id, description, facture)
 async def list_factures():
     return {"factures": facture}
 
-@app.post("/facturas", response_model=Facture)
-async def create_facture(new_facture: Facture):
-    new_facture.id = len(facture) + 1
-    facture.append(new_facture)
-    return new_facture
+@app.post("/facturas/{id_client}", response_model=Facture)
+async def create_facture(data_facture: createfacture):
+    if data_facture.id_client not in [client.id for client in list_clients]: #verificamos que el id del cliente exista en la lista de clientes
+        return {"message": "client not found"}
+
+    facture_val = updatefacture.model_validate(data_facture.model_dump()) #validamos la factura que se va a crear
+
+    facture_val.id = len(facture) + 1 #asignamos un id a la factura que se va a crear, el id es igual al tamaño de la lista de facturas + 1
+    
+    facture.append(facture_val) #agregamos la factura a la lista de facturas
+        #return the facture_val with the information about the client whit this id_client
+    return facture_val
 
 @app.get("/facturas/{id}", response_model=Facture)
 async def get_facture(id: int):
-    for f in facture:
-        if f.id == id:
-            return f
+    for fac in facture:
+        if fac.id == id:
+            return fac
     return {"message": "facture not found"}
 
 @app.delete("/facturas/{id}")
 async def delete_facture(id: int):
-    for f in facture:
-        if f.id == id:
-            facture.remove(f)
+    for fac in facture:
+        if fac.id == id:
+            facture.remove(fac)
             return {"message": "facture deleted"}
     return {"message": "facture not found"}
 
+@app.put("/facturas/{id}", response_model=Facture)
+async def update_facture(id: int, data_facture: createfacture):
+    for fac in facture:
+        if fac.id == id:
+            facture_val = updatefacture.model_validate(data_facture.model_dump()) #validamos la factura que se va a actualizar
+            fac.date = facture_val.date
+            fac.id_client = facture_val.id_client
+            fac.totalvalue = facture_val.totalvalue
+            return fac
+    return {"message": "facture not found"}
+
 # TRANSACTIONS ENDPOINTS
-@app.get("/transacciones")
+@app.get("/transactions")
 async def list_transactions():
     return {"transactions": transaction}
 
-@app.post("/transacciones", response_model=Transaction)
-async def create_transaction(new_transaction: Transaction):
-    new_transaction.id = len(transaction) + 1
-    transaction.append(new_transaction)
-    return new_transaction
+@app.post("/transactions", response_model=transactions)
+async def create_transaction(data_transaction: transactioncreate):
+    if data_transaction.facture_id not in [f.id for f in facture]: #verificamos que el id de la factura exista en la lista de facturas
+        return {"message": "facture not found"}
 
-@app.get("/transacciones/{id}", response_model=Transaction)
+    transaction_val = transactiont.model_validate(data_transaction.model_dump()) #validamos la transaccion que se va a crear
+
+    transaction_val.id = len(transaction) + 1 #asignamos un id a la transaccion que se va a crear, el id es igual al tamaño de la lista de transacciones + 1
+    
+    transaction.append(transaction_val)
+    return transaction_val
+
+@app.get("/transactions/{id}", response_model=transactions)
 async def get_transaction(id: int):
-    for t in transaction:
-        if t.id == id:
-            return t
+    for transac in transaction:
+        if transac.id == id:
+            return transac
     return {"message": "transaction not found"}
 
-@app.delete("/transacciones/{id}")
+@app.delete("/transactions/{id}")
 async def delete_transaction(id: int):
-    for t in transaction:
-        if t.id == id:
-            transaction.remove(t)
+    for transac in transaction:
+        if transac.id == id:
+            transaction.remove(transac)
             return {"message": "transaction deleted"}
     return {"message": "transaction not found"}
+
+@app.put("/transactions/{id}", response_model=transactions)
+async def update_transaction(id: int, data_transaction: transactioncreate): 
+    for transac in transaction:
+        if transac.id == id:
+            transaction_val = transactiont.model_validate(data_transaction.model_dump()) #validamos la transaccion que se va a actualizar
+            transac.unitari_value = transaction_val.unitari_value
+            transac.cantidad = transaction_val.cantidad
+            transac.facture_id = transaction_val.facture_id
+            return transac
+    return {"error":"Transaction not found"}
