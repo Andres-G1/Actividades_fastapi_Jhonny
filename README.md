@@ -14,3 +14,11 @@
 - `modelos/cliente.py`: modelo de cliente.
 - `modelos/facture.py`: modelo de factura.
 - `modelos/transaction.py`: modelo de transacción.
+
+## Estructura de carpetas
+
+- Creamos una carpeta a `app`.
+- Dentro de esa carpeta se organiza el achivo `main.py` y creamos  otro llamado `database.py`.
+- Dentro de esta carpeta agregamos dos carpetas `Models` y `Routers`.
+- En `Modeles` ubicamos los archivos donde tenemos las clases de cliente y factura.
+- En `Routers` ubicamos el archivo `clientes.py`.
