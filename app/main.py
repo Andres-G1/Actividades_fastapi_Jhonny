@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import clientes, bill
+from app.routers import clientes, bill, transactions
 from app.database import list_clients, bills, transaction
 
 app = FastAPI()
@@ -12,9 +12,10 @@ app.include_router(clientes.router)
 
 app.include_router(bill.router)
 
-@app.get("/")
-async def raiz():
-    return {"mensaje": "API funcionando correctamente"}
+#Router Transactions
+
+app.include_router(transactions.router)
+
 '''
 Create models (transaction, Bill,)
 Bill(id, date, client, totalvalue)

@@ -9,11 +9,11 @@ router = APIRouter(
 )
 
 
-@router.get("/clientes")
+@router.get("/clientes", tags=["clientes"])
 async def Listar_clientes():
-    return {"clients": list_clients}
+    return {"clients": list_clients}    
 
-@router.post("/clientes", response_model=Client)
+@router.post("/clientes", response_model=Client, tags=["clientes"])
 async def create_clients(date_client: Clientcreate):
 
     Client_val = Clientt.model_validate(date_client.model_dump()) #el model dump convierte el objeto date_client en un diccionario para que pueda ser validado por el modelo Clientt
@@ -24,14 +24,14 @@ async def create_clients(date_client: Clientcreate):
     return Client_val
 
 #reto: crear un nuevo endponint y que me remote un solo cliente 
-@router.get("/clientes/{id}", response_model=Client)
+@router.get("/clientes/{id}", response_model=Client, tags=["clientes"])
 async def get_client(id: int):
     for client in list_clients:
         if client.id == id:
             return client
     return {"message": "client not found"}
 
-@router.delete("/clientes/{id}", response_model=Client)
+@router.delete("/clientes/{id}", response_model=Client, tags=["clientes"])
 async def delete_client(id: int):
     for client in list_clients:
         if client.id == id:
@@ -39,7 +39,7 @@ async def delete_client(id: int):
             return {"message": "client deleted"}
     return {"message": "client not found"}
 
-@router.put("/clientes/{id}", response_model=Client)
+@router.put("/clientes/{id}", response_model=Client, tags=["clientes"])
 async def update_client(id: int, date_client: Clientcreate):
     for client in list_clients:
         if client.id == id:
