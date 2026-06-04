@@ -12,7 +12,7 @@
 
 - `main.py`: define los endpoints de FastAPI y la lógica de creación/listado.
 - `modelos/cliente.py`: modelo de cliente.
-- `modelos/facture.py`: modelo de factura.
+- `modelos/bill.py`: modelo de factura.
 - `modelos/transaction.py`: modelo de transacción.
 
 ## Estructura de carpetas
