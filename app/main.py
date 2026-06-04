@@ -145,3 +145,6 @@ async def update_transaction(id: int, data_transaction: transactioncreate):
 
 
 "Bill == Factura"
+"Git log == Para ver el historial de cambios"
+"Git log --oneline == Para ver el historial de cambios en una sola linea"
+"Git checkout codigo ==para cambiar a un commit especifico"
