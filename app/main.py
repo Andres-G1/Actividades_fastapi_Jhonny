@@ -6,7 +6,7 @@ app = FastAPI()
 
 list_clients: list[Client] = []
 facture: list[Facture] = []
-transaction: list[Transaction] = []
+transaction: list[transactions] = []
 
 #models
 
@@ -107,7 +107,7 @@ async def list_transactions():
 
 @app.post("/transactions", response_model=transactions)
 async def create_transaction(data_transaction: transactioncreate):
-    if data_transaction.facture_id not in [f.id for f in facture]: #verificamos que el id de la factura exista en la lista de facturas
+    if data_transaction.facture_id not in [fac.id for fac in facture]: #verificamos que el id de la factura exista en la lista de facturas
         return {"message": "facture not found"}
 
     transaction_val = transactiont.model_validate(data_transaction.model_dump()) #validamos la transaccion que se va a crear
