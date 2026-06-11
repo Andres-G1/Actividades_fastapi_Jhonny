@@ -8,6 +8,8 @@ router = APIRouter(
     responses={404: {"description": "No encontrado"}}
 )
 
+bills: list[Bill] = []
+
 # BILLS ENDPOINTS
 @router.get("/facturas", tags=["bill"])
 async def list_bills():

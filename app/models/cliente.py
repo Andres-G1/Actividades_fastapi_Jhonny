@@ -1,6 +1,7 @@
 from pydantic import BaseModel
+from sqlmodel import SQLModel, Field
 
-class Client(BaseModel):
+class Client(SQLModel):
     name: str
     age: int
     description: str | None = None
@@ -8,5 +9,5 @@ class Client(BaseModel):
 class Clientcreate(Client):
     pass
 
-class Clientt(Client):
+class Clientt(Client Table=True):
     id: int |None = None

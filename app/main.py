@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from app.routers import clientes, bill, transactions
-from app.database import list_clients, bills, transaction
+from app.routers import clientes, bill, transactions, list_clients, bills, transaction
 
 app = FastAPI()
 

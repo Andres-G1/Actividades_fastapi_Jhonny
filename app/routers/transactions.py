@@ -5,7 +5,6 @@ from app.database import bills, transaction
 
 router = APIRouter(
     prefix="/Transactions",
-    tags=["Transactions"],
     responses={404: {"description": "No encontrado"}}
 )
 

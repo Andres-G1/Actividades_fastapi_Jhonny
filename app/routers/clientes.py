@@ -4,7 +4,6 @@ from app.database import list_clients
 
 router = APIRouter(
     prefix="/clientes",
-    tags=["clientes"],
     responses={404: {"description": "No encontrado"}}
 )
 
