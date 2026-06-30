@@ -1,55 +1,72 @@
-from fastapi import APIRouter, HTTPException
-from app.models.bill import Bill, createbill, updatebill
-from app.database import bills, list_clients
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import select
+from ..database import Sesion_dependencia
+from ..models.bill import bills, createbill, billread, billreadcompuesta, updatebill
+from ..models.cliente import Clientt
+from ..list import list_client
+from ..list import list_bill
 
-router = APIRouter(
-    prefix="/bill",
-    tags=["bill"],
-    responses={404: {"description": "No encontrado"}}
-)
+router_bills = APIRouter()
 
-bills: list[Bill] = []
+@router_bills.get("/bills", response_model=list[billreadcompuesta])
+async def Listar_bill(sesion: Sesion_dependencia):
+    query = select(bills)
+    listar_bill = sesion.exec(query).all()  
+    return listar_bill
 
-# BILLS ENDPOINTS
-@router.get("/facturas", tags=["bill"])
-async def list_bills():
-    return {"bills": bills}
+@router_bills.get("/bills/{bill_id}", response_model=billread)
+async def obtener_bill_por_id(bill_id: int, sesion: Sesion_dependencia):
+    bill_bd = sesion.get(bills, bill_id)
+    if not bill_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="No existe la factura"
+        )
+    return bill_bd
 
-@router.post("/facturas/{id_client}", response_model=Bill, tags=["bill"])
-async def create_bill(data_bill: createbill):
-    if data_bill.id_client not in [client.id for client in list_clients]: #verificamos que el id del cliente exista en la lista de clientes
-        return {"message": "client not found"}
-
-    bill_val = updatebill.model_validate(data_bill.model_dump()) #validamos la factura que se va a crear
-
-    bill_val.id = len(bills) + 1 #asignamos un id a la factura que se va a crear, el id es igual al tamaño de la lista de facturas + 1
+@router_bills.post("/bills/{client_id}", response_model=bills)
+async def create_bill(client_id: int, data_bill: createbill, sesion: Sesion_dependencia):
+    client_encontrado = sesion.get(Clientt, client_id)
+    if not client_encontrado:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cliente no encontrado"
+        )
     
-    bills.append(bill_val) #agregamos la factura a la lista de facturas
-        #return the bill_val with the information about the client whit this id_client
-    return bill_val
+    bill_dict = data_bill.model_dump()
+    bill_dict ["client_id"] = client_id
+    bill_val = bills.model_validate(bill_dict)
 
-@router.get("/facturas/{id}", response_model=Bill, tags=["bill"])
-async def get_bill(id: int):
-    for bil in bills:
-        if bil.id == id:
-            return bil
-    return {"message": "bill not found"}
+    sesion.add(bill_val)
+    sesion.commit()
+    sesion.refresh(bill_val)
+    return bill_val 
 
-@router.delete("/facturas/{id}", tags=["bill"])
-async def delete_bill(id: int):
-    for bil in bills:
-        if bil.id == id:
-            bills.remove(bil)
-            return {"message": "bill deleted"}
-    return {"message": "bill not found"}
+@router_bills.patch("/bills/{bill_id}", response_model=billread)
+async def alter_bill(bill_id: int, data_bill: updatebill, sesion: Sesion_dependencia):
+    bill_bd = sesion.get(bills, bill_id)
+    if not bill_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe la factura"
+        )
+    bill_dict = data_bill.model_dump(exclude_unset=True)
+    bill_bd.sqlmodel_update(bill_dict)
+    
+    sesion.add(bill_bd)
+    sesion.commit()
+    sesion.refresh(bill_bd)
+    return bill_bd
 
-@router.put("/facturas/{id}", response_model=Bill, tags=["bill"])
-async def update_bill(id: int, data_bill: createbill):
-    for bil in bills:
-        if bil.id == id:
-            bill_val = updatebill.model_validate(data_bill.model_dump()) #validamos la factura que se va a actualizar
-            bil.date = bill_val.date
-            bil.id_client = bill_val.id_client
-            bil.totalvalue = bill_val.totalvalue
-            return bil
-    return {"message": "bill not found"}
+# Eliminar factura por ID
+@router_bills.delete("/bills/{bill_id}", response_model=billread)
+async def delete_bill(bill_id: int, sesion: Sesion_dependencia):
+    bill_bd = sesion.get(bills, bill_id)
+    if not bill_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe la factura"
+        )
+    sesion.delete(bill_bd)
+    sesion.commit()
+    return bill_bd

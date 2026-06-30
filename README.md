@@ -22,3 +22,11 @@
 - Dentro de esta carpeta agregamos dos carpetas `Models` y `Routers`.
 - En `Modeles` ubicamos los archivos donde tenemos las clases de cliente y factura.
 - En `Routers` ubicamos el archivo `clientes.py`.
+
+## Ordenamiento de carpetas y Conexion con la BD
+
+- Creamos la carpeta `router` dentro de la carpeta `app`.
+- Dentro de esa carpeta creamos los archivos `cliente.py`, `bill.py` y `transactions.py`.
+- Importamos con `from flask import APIRouter`.
+- Limpiamos el main.py en este solo vamos a colocar `app.include_router(clientes.router)` o `(Bills.router) `.
+- Por ultimo añadimos con uv sqlite y en el archivo `databse.py` lo configuramos.

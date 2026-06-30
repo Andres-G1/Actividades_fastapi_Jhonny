@@ -1,51 +1,70 @@
-# TRANSACTIONS ENDPOINTS
-from fastapi import APIRouter, HTTPException
-from app.models.bill import transactions, transactioncreate, transactiont
-from app.database import bills, transaction
+from fastapi import APIRouter, HTTPException, status
+from sqlmodel import select
+from ..models.transactions import transactiont, transactioncreate, transactionread, updatetransaction
+from ..models.bill import bills
+from ..database import Sesion_dependencia
 
-router = APIRouter(
-    prefix="/Transactions",
-    responses={404: {"description": "No encontrado"}}
-)
+router_transactions = APIRouter()
 
-@router.get("/transactions", tags=["Transactions"])
-async def list_transactions():
-    return {"transactions": transaction}
+@router_transactions.get("/transactions", response_model=list[transactiont])
+async def listar_transactions(sesion: Sesion_dependencia):
+    query = select(transactiont)
+    resultado = sesion.exec(query).all()
+    return resultado
 
-@router.post("/transactions", response_model=transactions, tags=["Transactions"])
-async def create_transaction(data_transaction: transactioncreate):
-    if data_transaction.bill_id not in [bil.id for bil in bills]: #verificamos que el id de la factura exista en la lista de facturas
-        return {"message": "bill not found"}
+@router_transactions.post("/transactions/{bill_id}", response_model=transactiont)
+async def create_transactions(bill_id: int, data_transaction: transactioncreate, sesion: Sesion_dependencia):
+    bill_encontrado = sesion.get(bills, bill_id)
+    if not bill_encontrado:
+        raise HTTPException(
+            status_code=400,
+            detail="factura no encontrada"
+        )
 
-    transaction_val = transactiont.model_validate(data_transaction.model_dump()) #validamos la transaccion que se va a crear
+    transaction_dict = data_transaction.model_dump()
+    transaction_dict["bill_id"] = bill_id
+    transaction_val = transactiont.model_validate(transaction_dict)
 
-    transaction_val.id = len(transaction) + 1 #asignamos un id a la transaccion que se va a crear, el id es igual al tamaño de la lista de transacciones + 1
-    
-    transaction.append(transaction_val)
+    sesion.add(transaction_val)
+    sesion.commit()
+    sesion.refresh(transaction_val)
     return transaction_val
 
-@router.get("/transactions/{id}", response_model=transactions,  tags=["Transactions"])
-async def get_transaction(id: int):
-    for transac in transaction:
-        if transac.id == id:
-            return transac
-    return {"message": "transaction not found"}
+@router_transactions.get("/transactions/{transaction_id}", response_model=transactionread)
+async def obtener_transaction(transaction_id: int, sesion: Sesion_dependencia):
+    transaction_bd = sesion.get(transactiont, transaction_id)
+    if not transaction_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe la transacción"
+        )
+    return transaction_bd
 
-@router.delete("/transactions/{id}",  tags=["Transactions"])
-async def delete_transaction(id: int):
-    for transac in transaction:
-        if transac.id == id:
-            transaction.remove(transac)
-            return {"message": "transaction deleted"}
-    return {"message": "transaction not found"}
+@router_transactions.patch("/transactions/{transaction_id}", response_model=transactionread)
+async def alter_transaction(transaction_id: int, data_transaction: updatetransaction, sesion: Sesion_dependencia):
+    transaction_bd = sesion.get(transactiont, transaction_id)
+    if not transaction_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe la transacción"
+        )
+    
+    transaction_dict = data_transaction.model_dump(exclude_unset=True)
+    transaction_bd.sqlmodel_update(transaction_dict)
+    
+    sesion.add(transaction_bd)
+    sesion.commit()
+    sesion.refresh(transaction_bd)
+    return transaction_bd
 
-@router.put("/transactions/{id}", response_model=transactions,  tags=["Transactions"])
-async def update_transaction(id: int, data_transaction: transactioncreate): 
-    for transac in transaction:
-        if transac.id == id:
-            transaction_val = transactiont.model_validate(data_transaction.model_dump()) #validamos la transaccion que se va a actualizar
-            transac.unitari_value = transaction_val.unitari_value
-            transac.cantidad = transaction_val.cantidad
-            transac.bill_id = transaction_val.bill_id
-            return transac
-    return {"error":"Transaction not found"}
+@router_transactions.delete("/transactions/{transaction_id}", response_model=transactionread)
+async def delete_transaction(transaction_id: int, sesion: Sesion_dependencia):
+    transaction_bd = sesion.get(transactiont, transaction_id)
+    if not transaction_bd:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No existe la transacción"
+        )
+    sesion.delete(transaction_bd)
+    sesion.commit()
+    return transaction_bd

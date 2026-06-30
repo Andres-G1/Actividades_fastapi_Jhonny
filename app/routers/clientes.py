@@ -1,49 +1,58 @@
-from fastapi import APIRouter, HTTPException
-from app.models.cliente import Client, Clientcreate, Clientt
-from app.database import list_clients
+from fastapi import APIRouter, HTTPException, status
+from sqlmodel import select
+from ..database import Sesion_dependencia
+from ..models.cliente import Clientt, Clientcreate, Clientupdate
+from ..list import list_client
 
-router = APIRouter(
-    prefix="/clientes",
-    responses={404: {"description": "No encontrado"}}
+router_client = APIRouter()
+
+@router_client.get("/clients", response_model=list[Clientt])
+async def list_clients(sesion: Sesion_dependencia):
+    clients = sesion.exec(select(Clientt)).all()
+    return clients
+
+@router_client.get(
+        "clients/{client_id}",
+        response_model=(Clientt)
 )
+async def listar_client(client_id: int, sesion: Sesion_dependencia):
+    client_bd = sesion.get(Clientt, client_id)
+    if not client_bd:
+        raise HTTPException(
+            status_code=400,detail=f"No existe el cliente"
+            )
+    return client_bd
 
+@router_client.post("/client/{client_id}", response_model=Clientt)
+async def create_client(data_client: Clientcreate, sesion: Sesion_dependencia):
+    client_val = Clientt.model_validate(data_client.model_dump())
+    sesion.add(client_val)
+    sesion.commit()
+    sesion.refresh(client_val)
+    return client_val
 
-@router.get("/clientes", tags=["clientes"])
-async def Listar_clientes():
-    return {"clients": list_clients}    
-
-@router.post("/clientes", response_model=Client, tags=["clientes"])
-async def create_clients(date_client: Clientcreate):
-
-    Client_val = Clientt.model_validate(date_client.model_dump()) #el model dump convierte el objeto date_client en un diccionario para que pueda ser validado por el modelo Clientt
-
-    Client_val.id = len(list_clients) + 1 #asignamos un id al cliente que se va a crear, el id es igual al tamaño de la lista de clientes + 1
+@router_client.patch("/client/{client_id}", response_model=Clientt)
+async def alter_client(client_id: int, data_client: Clientupdate, sesion: Sesion_dependencia):
+    client_bd = sesion.get(Clientt, client_id)
+    if not client_bd:
+        raise HTTPException(
+            status_code=400,detail=f"No existe el cliente"
+            )
+    client_dict = data_client.model_dump(exclude_unset=True)
+    client_bd.sqlmodel_update(client_dict)
+    sesion.add(client_bd)
+    sesion.commit()
+    sesion.refresh(client_bd)
+    return client_bd
     
-    list_clients.append(Client_val) #agregamos el cliente a la lista de clientes
-    return Client_val
+@router_client.delete("/client/{client_Id}", response_model=Clientt)
+async def delete_client(client_id: int, sesion: Sesion_dependencia):
+    client_bd = sesion.get(Clientt, client_id)
+    if not client_bd:
+        raise HTTPException(
+            status_code=400,detail=f"No existe el cliente"
+            )
+    sesion.delete(client_bd)
+    sesion.commit()
+    return client_bd
 
-#reto: crear un nuevo endponint y que me remote un solo cliente 
-@router.get("/clientes/{id}", response_model=Client, tags=["clientes"])
-async def get_client(id: int):
-    for client in list_clients:
-        if client.id == id:
-            return client
-    return {"message": "client not found"}
-
-@router.delete("/clientes/{id}", response_model=Client, tags=["clientes"])
-async def delete_client(id: int):
-    for client in list_clients:
-        if client.id == id:
-            list_clients.remove(client) #remove elimina el cliente de la lista de clientes
-            return {"message": "client deleted"}
-    return {"message": "client not found"}
-
-@router.put("/clientes/{id}", response_model=Client, tags=["clientes"])
-async def update_client(id: int, date_client: Clientcreate):
-    for client in list_clients:
-        if client.id == id:
-            cli_val = Clientt.model_validate(date_client.model_dump()) #validamos el cliente que se va a actualizar
-            client.name = cli_val.name
-            client.age = cli_val.age
-            client.description = cli_val.description
-            return client

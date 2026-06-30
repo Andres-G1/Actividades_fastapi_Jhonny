@@ -1,13 +1,19 @@
-from pydantic import BaseModel
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 
-class Client(SQLModel):
-    name: str
-    age: int
-    description: str | None = None
+class ClientBase(SQLModel):
+    name: str | None = Field(default=None)
+    age: int | None = Field(default=None)
+    description: str | None = Field(default=None)
 
-class Clientcreate(Client):
+class Clientcreate(ClientBase):
     pass
 
-class Clientt(Client Table=True):
-    id: int |None = None
+class Clientupdate(ClientBase):
+    pass
+
+class Clientt(ClientBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    bill: list["bills"] = Relationship(back_populates="client")
+
+class clientread(ClientBase):
+    id: int

@@ -1,24 +1,47 @@
-from pydantic import BaseModel
-import datetime
+from pydantic import computed_field
+from sqlmodel import SQLModel, Field, Relationship
+from .cliente import Clientt, clientread
+from .transactions import transactiont
+from datetime import datetime
 
-class Bill(BaseModel):
-    date: datetime.date = datetime.date.today()
-    id_client: int
-    totalvalue: float
+# Clase Base limpia (Solo campos de base de datos)
+class BillBase(SQLModel):
+    date: datetime = Field(default_factory=datetime.now)
 
-class createbill(Bill):
+class createbill(BillBase):
     pass
 
-class updatebill(Bill):
-    id: int | None = None
-
-class transactions(BaseModel):
-    unitari_value: float
-    cantidad: int
-    bill_id: int
-
-class transactioncreate(transactions):
+class updatebill(BillBase):
     pass
 
-class transactiont(transactions):
-    id: int | None = None
+# La tabla física de la base de datos NO debe ver el property/computed_field
+class bills(BillBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    client_id: int = Field(default=None, foreign_key="clientt.id")
+    
+    client: Clientt = Relationship(back_populates="bill")
+    transactions: list[transactiont] = Relationship(back_populates="bill")
+
+class billread(BillBase):
+    id: int 
+    client: clientread | None = None
+
+    @computed_field
+    @property
+    def vr_total(self) -> float:
+        # Usamos getattr por seguridad por si la relación no se cargó en la consulta
+        transacciones = getattr(self, "transactions", None)
+        
+        if not transacciones:
+            return 0.0
+            
+        total_bill = 0.0
+        for transaction in transacciones:
+            # Corrección: Se SUMA (+=) a la factura, no se multiplica (*=)
+            total_bill += transaction.unitari_value * transaction.cantidad
+            
+        return total_bill
+
+class billreadcompuesta(billread):
+    transactions: list[transactiont] = []
+
