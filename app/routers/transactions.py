@@ -17,7 +17,7 @@ async def create_transactions(bill_id: int, data_transaction: transactioncreate,
     bill_encontrado = sesion.get(bills, bill_id)
     if not bill_encontrado:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="factura no encontrada"
         )
 

@@ -19,7 +19,7 @@ async def listar_client(client_id: int, sesion: Sesion_dependencia):
     client_bd = sesion.get(Clientt, client_id)
     if not client_bd:
         raise HTTPException(
-            status_code=400,detail=f"No existe el cliente"
+            status_code=status.HTTP_404_NOT_FOUND,detail=f"No existe el cliente"
             )
     return client_bd
 
@@ -36,7 +36,7 @@ async def alter_client(client_id: int, data_client: Clientupdate, sesion: Sesion
     client_bd = sesion.get(Clientt, client_id)
     if not client_bd:
         raise HTTPException(
-            status_code=400,detail=f"No existe el cliente"
+            status_code=status.HTTP_404_NOT_FOUND,detail=f"No existe el cliente"
             )
     client_dict = data_client.model_dump(exclude_unset=True)
     client_bd.sqlmodel_update(client_dict)
@@ -50,7 +50,7 @@ async def delete_client(client_id: int, sesion: Sesion_dependencia):
     client_bd = sesion.get(Clientt, client_id)
     if not client_bd:
         raise HTTPException(
-            status_code=400,detail=f"No existe el cliente"
+            status_code=status.HTTP_404_NOT_FOUND,detail=f"No existe el cliente"
             )
     sesion.delete(client_bd)
     sesion.commit()

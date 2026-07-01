@@ -29,7 +29,7 @@ async def create_bill(client_id: int, data_bill: createbill, sesion: Sesion_depe
     client_encontrado = sesion.get(Clientt, client_id)
     if not client_encontrado:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Cliente no encontrado"
         )
     
