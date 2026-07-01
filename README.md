@@ -30,3 +30,14 @@
 - Importamos con `from flask import APIRouter`.
 - Limpiamos el main.py en este solo vamos a colocar `app.include_router(clientes.router)` o `(Bills.router) `.
 - Por ultimo añadimos con uv sqlite y en el archivo `databse.py` lo configuramos.
+
+## Conexion de los modelos con la base de datos
+
+- Terminamos de hacer la conexion de la base de datos primero creamos 
+`Sesion_dependencia` dentro del archivo `database.py`.
+- Seguido de esto en los models `cliente.py`, `bill.py` y `transactions.py`,
+los conectamos con `sqlmodel` en el cual vamos de paso a dejar el `Field`, `Relationship`, para los campos que vamos a llenar y de paso dejamos para hacer las relaciones de los modelos.
+- En los archivos de `Router`, para subir los cambios hacemos uso de `add,commit,refresh` no en todos,
+pero si en los create, alter y delete, en el caso del delete `delete`.
+- Hacemos las relaciones del modelo `client` con el modelo `bill` y `bill` con `Transactions`, en el caso de client para que nos pueda mostrar el nombre del cliente en la factura y en el caso de trasaccion para poder,
+ver las transacciones del cliente mas lo que gasta la persona.

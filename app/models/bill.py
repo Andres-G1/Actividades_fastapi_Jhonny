@@ -4,7 +4,6 @@ from .cliente import Clientt, clientread
 from .transactions import transactiont
 from datetime import datetime
 
-# Clase Base limpia (Solo campos de base de datos)
 class BillBase(SQLModel):
     date: datetime = Field(default_factory=datetime.now)
 
@@ -14,7 +13,6 @@ class createbill(BillBase):
 class updatebill(BillBase):
     pass
 
-# La tabla física de la base de datos NO debe ver el property/computed_field
 class bills(BillBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     client_id: int = Field(default=None, foreign_key="clientt.id")
@@ -29,7 +27,6 @@ class billread(BillBase):
     @computed_field
     @property
     def vr_total(self) -> float:
-        # Usamos getattr por seguridad por si la relación no se cargó en la consulta
         transacciones = getattr(self, "transactions", None)
         
         if not transacciones:
@@ -37,7 +34,6 @@ class billread(BillBase):
             
         total_bill = 0.0
         for transaction in transacciones:
-            # Corrección: Se SUMA (+=) a la factura, no se multiplica (*=)
             total_bill += transaction.unitari_value * transaction.cantidad
             
         return total_bill
